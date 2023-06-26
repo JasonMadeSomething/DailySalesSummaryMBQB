@@ -1,10 +1,11 @@
 ﻿using DailySalesSummary.Models;
+using System.Runtime.CompilerServices;
 
 namespace DailySalesSummary.Repositories
 {
     public interface IUserRepository
     {
-        Task<IEnumerable<User>> GetAllUsers();
+        
         Task<User> GetUser(string id);
         
         // User Create
@@ -14,5 +15,8 @@ namespace DailySalesSummary.Repositories
         // User Delete
         Task<bool> DeleteUser(string id);
 
+        Task<User> FindByNameAsync(string username);
+
+        Task<bool> CheckPasswordAsync(User user, string password);
     }
 }

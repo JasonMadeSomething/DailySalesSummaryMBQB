@@ -6,6 +6,13 @@ using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Driver;
 using DailySalesSummary.Controllers;
 using DailySalesSummary.Services;
+using Microsoft.AspNetCore.Identity;
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using AspNetCore.Identity.Mongo;
+using DailySalesSummary.Models;
+using AspNetCore.Identity.Mongo.Model;
 
 public class Startup
 {
@@ -18,6 +25,30 @@ public class Startup
 
     public void ConfigureServices(IServiceCollection services)
     {
+
+        var jwtSettings = Configuration.GetSection("JwtSettings");
+        var key = Encoding.UTF8.GetBytes(jwtSettings.GetValue<string>("Key"));
+
+
+        services.AddAuthentication(options =>
+        {
+            options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+            options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+        })
+        .AddJwtBearer(options =>
+        {
+            options.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(key),
+                ValidateIssuer = true,
+                ValidIssuer = jwtSettings.GetValue<string>("Issuer"),
+                ValidateAudience = true,
+                ValidAudience = jwtSettings.GetValue<string>("Audience"),
+                ValidateLifetime = true,
+                ClockSkew = TimeSpan.Zero
+            };
+        });
         services.AddSingleton<IMongoClient, MongoClient>(s =>
         {
             var connectionString = Configuration.GetConnectionString("MongoDb");
@@ -29,7 +60,22 @@ public class Startup
             client.BaseAddress = new Uri(Configuration.GetSection("MindbodyAPI:BaseUrl").Value);
             
         });
+        services.AddIdentityMongoDbProvider<User, MongoRole>(identityOptions =>
+        {
+            identityOptions.Password.RequiredLength = 8;
+            identityOptions.Password.RequireDigit = true;
+            identityOptions.Password.RequireLowercase = true;
+            identityOptions.Password.RequireUppercase = true;
+            identityOptions.Password.RequireNonAlphanumeric = true;
+        }, mongoIdentityOptions =>
+        {
+            mongoIdentityOptions.ConnectionString = Configuration.GetConnectionString("MongoDb");
+            mongoIdentityOptions.UsersCollection = "Users";
+            mongoIdentityOptions.RolesCollection = "Roles";
+        });
+
         
+
         services.AddSingleton<IUserRepository, UserRepository>();
         services.AddScoped<IMindbodyClient, MindbodyClient>();
         services.AddScoped<IMindbodyDataRepository, MindbodyDataRepository>();
@@ -50,10 +96,14 @@ public class Startup
             app.UseDeveloperExceptionPage();
         }
 
+        
+        
+
         app.UseHttpsRedirection();
 
         app.UseRouting();
-
+        app.UseAuthorization();
+        app.UseAuthentication();
         app.UseEndpoints(endpoints =>
         {
             endpoints.MapControllers();

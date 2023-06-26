@@ -1,9 +1,11 @@
 ﻿using DailySalesSummary.Models;
+using Microsoft.AspNetCore.Mvc;
+
 namespace DailySalesSummary.Services
 {
     public interface IUserService
     {
-        Task<IEnumerable<User>> GetAllUsers();
+        
 
         Task<User> GetUser(string id);
 
@@ -13,5 +15,6 @@ namespace DailySalesSummary.Services
 
         Task<bool> DeleteUser(string id);
 
+        Task<User> Authenticate(string username, string password);  
     }
 }

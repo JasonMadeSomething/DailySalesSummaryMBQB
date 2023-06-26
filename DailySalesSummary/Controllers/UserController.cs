@@ -18,10 +18,9 @@ namespace DailySalesSummary.Controllers
 
         // GET: api/User
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<User>>> GetUsers()
+        public async Task<ActionResult<IEnumerable<User>>> Ping()
         {
-            var users = await _userService.GetAllUsers();
-            return Ok(users);
+            return Ok();
         }
 
         // GET: api/User/{id}
@@ -54,7 +53,7 @@ namespace DailySalesSummary.Controllers
         [HttpPut]
         public async Task<ActionResult<User>> UpdateUser([FromBody] User userIn)
         {
-            var user = await _userService.GetUser(userIn.Id);
+            var user = await _userService.GetUser(userIn.Id.ToString());
 
             if (user == null)
             {
@@ -79,5 +78,17 @@ namespace DailySalesSummary.Controllers
             return CreatedAtAction(nameof(GetUser), new { id = createdUser.Id }, createdUser);
         }
 
+        [HttpPost("authenticate")]
+        public async Task<ActionResult<User>> Authenticate([FromBody] User user)
+        {
+            User authenticatedUser = await _userService.Authenticate(user.UserName, user.PasswordHash);
+
+            if (authenticatedUser == null)
+            {
+                return BadRequest(new { message = "Username or password is incorrect" });
+            }
+
+            return Ok(authenticatedUser);
+        }
     }
 }

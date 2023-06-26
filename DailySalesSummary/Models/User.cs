@@ -1,16 +1,12 @@
 ﻿using MongoDB.Bson.Serialization.Attributes;
 using MongoDB.Bson;
+using Microsoft.AspNetCore.Identity;
+using AspNetCore.Identity.Mongo.Model;
 
 namespace DailySalesSummary.Models
 {
-    public class User
+    public class User : MongoUser
     {
-        [BsonId]
-        [BsonRepresentation(BsonType.ObjectId)]
-        public string? Id { get; set; }
-
-        public string Username { get; set; }
-        public string Password { get; set; } 
         public MindbodySettings? Mindbody { get; set; }
         public QuickbooksSettings? Quickbooks { get; set; }
     }
