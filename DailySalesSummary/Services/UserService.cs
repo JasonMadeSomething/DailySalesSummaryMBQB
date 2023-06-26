@@ -19,9 +19,10 @@ namespace DailySalesSummary.Services
             return await _userRepository.GetUser(id);
         }
 
-        public async Task<User> CreateUser(User user)
+        public async Task<bool> CreateUser(User user, string password)
         {
-            return await _userRepository.CreateUser(user);
+             IdentityResult result = await _userRepository.CreateUser(user, password);
+             return result.Succeeded;
         }
 
         public async Task<User> UpdateUser(User userIn)

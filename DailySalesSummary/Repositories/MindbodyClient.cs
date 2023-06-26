@@ -1,6 +1,6 @@
 ﻿using DailySalesSummary.Models;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+
 
 namespace DailySalesSummary.Repositories
 {

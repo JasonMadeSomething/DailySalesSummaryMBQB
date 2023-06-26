@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using DailySalesSummary.Repositories;
 using DailySalesSummary.Models;
 using DailySalesSummary.Services;
+
 
 namespace DailySalesSummary.Controllers
 {
@@ -65,19 +65,6 @@ namespace DailySalesSummary.Controllers
             return Ok(result);
         }
 
-        [HttpPost]
-        public async Task<ActionResult<User>> CreateUser([FromBody] User user)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            var createdUser = await _userService.CreateUser(user);
-
-            return CreatedAtAction(nameof(GetUser), new { id = createdUser.Id }, createdUser);
-        }
-
         [HttpPost("authenticate")]
         public async Task<ActionResult<User>> Authenticate([FromBody] User user)
         {
@@ -89,6 +76,25 @@ namespace DailySalesSummary.Controllers
             }
 
             return Ok(authenticatedUser);
+        }
+
+        [HttpPost("Register")]
+        public async Task<IActionResult> Register(RegisterModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                User user = new User { UserName = model.Username };
+                bool result = await _userService.CreateUser(user, model.Password);
+
+                if (result)
+                {
+                    return Ok(new { message = "User registered successfully!" });
+                }
+
+                
+            }
+
+            return BadRequest(ModelState);
         }
     }
 }

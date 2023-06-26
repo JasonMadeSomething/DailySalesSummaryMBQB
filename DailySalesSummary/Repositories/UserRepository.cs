@@ -25,12 +25,12 @@ namespace DailySalesSummary.Repositories
             return await _userManager.FindByIdAsync(id);
         }
 
-        public async Task<User> CreateUser(User user)
+        public async Task<IdentityResult> CreateUser(User user, string password)
         {
-            IdentityResult result = await _userManager.CreateAsync(user);
+            IdentityResult result = await _userManager.CreateAsync(user, password);
 
             if (result.Succeeded)
-                return user;
+                return result;
             else
                 throw new Exception("User creation failed");
             
@@ -45,7 +45,7 @@ namespace DailySalesSummary.Repositories
 
         public async Task<bool> DeleteUser(string id)
         {
-            var result = await _userManager.DeleteAsync(await _userManager.FindByIdAsync(id));
+            IdentityResult result = await _userManager.DeleteAsync(await _userManager.FindByIdAsync(id));
 
             return result.Succeeded;
         }
@@ -57,8 +57,8 @@ namespace DailySalesSummary.Repositories
 
         public async Task<bool> CheckPasswordAsync(User user, string password)
         {
-            var result = await _userManager.CheckPasswordAsync(user, password);
-            return user;
+            bool result = await _userManager.CheckPasswordAsync(user, password);
+            return result;
         }
     }
 }
