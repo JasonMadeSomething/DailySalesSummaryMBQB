@@ -4,6 +4,7 @@ using DailySalesSummary.Models;
 using System.Diagnostics;
 using Microsoft.AspNetCore.Identity;
 using MongoDB.Driver.Linq;
+using AspNetCore.Identity.Mongo.Model;
 
 namespace DailySalesSummary.Repositories
 {
@@ -11,13 +12,17 @@ namespace DailySalesSummary.Repositories
     {
     
         private readonly UserManager<User> _userManager;
-
-        public UserRepository(UserManager<User> userManager)
+        private readonly RoleManager<MongoRole> _roleManager;
+        public UserRepository(UserManager<User> userManager, RoleManager<MongoRole> roleManager)
         {
             _userManager = userManager;
+            _roleManager = roleManager;
         }
 
-        
+        public async Task<IEnumerable<User>> GetAllUsers()
+        {
+            return await _userManager.GetUsersInRoleAsync("User");
+        }
 
         public async Task<User> GetUser(string id)
         {
@@ -25,22 +30,42 @@ namespace DailySalesSummary.Repositories
             return await _userManager.FindByIdAsync(id);
         }
 
-        public async Task<IdentityResult> CreateUser(User user, string password)
+        public async Task<IdentityResult> CreateUser(User user, string password, string roleName)
         {
             IdentityResult result = await _userManager.CreateAsync(user, password);
+            string errors = "";
+            if (!result.Succeeded)
+            {
+                errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                throw new Exception($"User creation failed: {errors}");
+            }
+            if (!await _roleManager.RoleExistsAsync(roleName))
+            {
+                var role = new MongoRole { Name = roleName };
+                var roleResult = await _roleManager.CreateAsync(role);
+                if (!roleResult.Succeeded)
+                {
+                    errors = string.Join(", ", roleResult.Errors.Select(e => e.Description));
+                    throw new Exception($"Role creation failed: {errors}");
+                }
+            }
+            IdentityResult roleAssignmentResult = await _userManager.AddToRoleAsync(user, roleName);
 
-            if (result.Succeeded)
-                return result;
-            else
-                throw new Exception("User creation failed");
-            
+            if (!roleAssignmentResult.Succeeded)
+            {
+                errors = string.Join(", ", roleAssignmentResult.Errors.Select(e => e.Description));
+                throw new Exception($"Role assignment failed: {errors}");
+            }
+
+            return result;
+
         }
 
-        public async Task<User> UpdateUser(User userIn)
+        public async Task<bool> UpdateUser(User userIn)
         {
-            
-            await _userManager.UpdateAsync(userIn);
-            return userIn;
+
+            IdentityResult result = await _userManager.UpdateAsync(userIn);
+            return result.Succeeded;
         }
 
         public async Task<bool> DeleteUser(string id)

@@ -14,6 +14,10 @@ namespace DailySalesSummary.Services
             
         }
 
+        public async Task<IEnumerable<User>> GetUsers()
+        {
+            return await _userRepository.GetAllUsers();
+        }
         public async Task<User> GetUser(string id)
         {
             return await _userRepository.GetUser(id);
@@ -21,11 +25,18 @@ namespace DailySalesSummary.Services
 
         public async Task<bool> CreateUser(User user, string password)
         {
-             IdentityResult result = await _userRepository.CreateUser(user, password);
+             IdentityResult result = await _userRepository.CreateUser(user, password, "User");
              return result.Succeeded;
         }
 
-        public async Task<User> UpdateUser(User userIn)
+        public async Task<bool> CreateAdmin(User user, string password)
+        {
+            IdentityResult result = await _userRepository.CreateUser(user, password, "Admin");
+            return result.Succeeded;
+        }
+
+
+        public async Task<bool> UpdateUser(User userIn)
         {
             return await _userRepository.UpdateUser(userIn);
         }

@@ -5,6 +5,6 @@ namespace DailySalesSummary.Services
     {
         Task<MindbodySettings> GetMindbodySettings(string userId);
 
-        Task<User> SetMindbodySettings(MindbodySettingsUpdateRequest mindbodySettingsUpdateRequest);
+        Task<bool> SetMindbodySettings(MindbodySettingsUpdateRequest mindbodySettingsUpdateRequest);
     }
 }

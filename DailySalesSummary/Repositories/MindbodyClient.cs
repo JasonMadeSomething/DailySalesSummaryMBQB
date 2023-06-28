@@ -15,15 +15,14 @@ namespace DailySalesSummary.Repositories
             _configuration = configuration;
         }
 
-        public async Task<MindbodySalesDataBatch> GetMindbodySalesDataAsync(MindbodyDataRequest mindbodyDataRequest)
+        public async Task<MindbodySalesDataBatch> GetMindbodySalesDataAsync(MindbodyDataRequest mindbodyDataRequest, User user)
         {
             var mindbodySalesData = new MindbodySalesDataBatch();
             
 
-            mindbodySalesData.UserId = mindbodyDataRequest.UserId;
             mindbodySalesData.FetchedAt = DateTime.Now;
 
-            if(mindbodyDataRequest.MindbodySettings == null)
+            if(user.Mindbody == null)
             {
                 return new MindbodySalesDataBatch();
             }
@@ -32,12 +31,19 @@ namespace DailySalesSummary.Repositories
             {
                 StartDate = mindbodyDataRequest.StartDate,
                 EndDate = mindbodyDataRequest.EndDate,
-                MindbodySettings = new MindbodySettings { StudioId = mindbodyDataRequest.MindbodySettings.StudioId, Username = mindbodyDataRequest.MindbodySettings.Username, Password = mindbodyDataRequest.MindbodySettings.Password }
                 
             };
             
+            if(_httpClient.DefaultRequestHeaders.Contains("API-Key"))
+            {
+                _httpClient.DefaultRequestHeaders.Remove("API-Key");
+            }
+            if(_httpClient.DefaultRequestHeaders.Contains("SiteId"))
+            {
+                _httpClient.DefaultRequestHeaders.Remove("SiteId");
+            }
             _httpClient.DefaultRequestHeaders.Add("API-Key", _configuration["MindbodyAPI:ApiKey"]);
-            _httpClient.DefaultRequestHeaders.Add("SiteId", mindbodySalesDataRequest.MindbodySettings.StudioId);
+            _httpClient.DefaultRequestHeaders.Add("SiteId", user.Mindbody.StudioId);
             HttpResponseMessage response = await _httpClient.GetAsync($"sale/sales");
             if (response.IsSuccessStatusCode)
             {
@@ -50,6 +56,11 @@ namespace DailySalesSummary.Repositories
                 }
 
                 List<Sale> allSales = new List<Sale>(salesResponse.Sales);
+
+                foreach (Sale sale in allSales)
+                {
+                    sale.userId = user.Id.ToString();    
+                }
 
                 int pageSize = salesResponse.PaginationResponse.PageSize;
                 int totalResults = salesResponse.PaginationResponse.TotalResults;
@@ -76,7 +87,6 @@ namespace DailySalesSummary.Repositories
                 foreach (Sale sale in allSales)
                 {
                     sale.batchId = mindbodySalesData.Id;
-                    sale.userId = mindbodySalesData.UserId;
                 }
 
                 mindbodySalesData.Sales = allSales;

@@ -41,7 +41,7 @@ namespace DailySalesSummary.Repositories
 
         public async Task<IEnumerable<MindbodyBatchReport>> GetByUserAsync(User user)
         {
-            return await _mindbodyBatchReports.Find(mindbodyBatchReport => mindbodyBatchReport.UserId == user.Id).ToListAsync();
+            return await _mindbodyBatchReports.Find(mindbodyBatchReport => mindbodyBatchReport.UserIds.Contains(user.Id.ToString())).ToListAsync();
         }
 
         public async Task<IEnumerable<MindbodyBatchReport>> GetByDateRangeAsync(DateTime startDate, DateTime endDate)
@@ -51,7 +51,7 @@ namespace DailySalesSummary.Repositories
 
         public async Task<IEnumerable<MindbodyBatchReport>> GetByDateRangeAndUserAsync(DateTime startDate, DateTime endDate, User user)
         {
-            return await _mindbodyBatchReports.Find(mindbodyBatchReport => mindbodyBatchReport.StartDate >= startDate && mindbodyBatchReport.EndDate <= endDate && mindbodyBatchReport.UserId == user.Id).ToListAsync();
+            return await _mindbodyBatchReports.Find(mindbodyBatchReport => mindbodyBatchReport.StartDate >= startDate && mindbodyBatchReport.EndDate <= endDate && mindbodyBatchReport.UserIds.Contains(user.Id.ToString())).ToListAsync();
         }
 
     }

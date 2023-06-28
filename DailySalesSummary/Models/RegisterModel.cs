@@ -17,5 +17,6 @@ namespace DailySalesSummary.Models
         public string ConfirmPassword { get; set; }
 
         // Additional fields like Email, FirstName, LastName, etc.
+        public MindbodySettings? Mindbody { get; set; }
     }
 }

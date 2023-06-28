@@ -25,7 +25,7 @@ namespace DailySalesSummary.Repositories
 
         public async Task<IEnumerable<Sale>> GetSalesByUser(User user)
         {
-            return await _mindbodySalesData.Find<Sale>(mindbodySalesData => mindbodySalesData.userId == user.Id).ToListAsync();
+            return await _mindbodySalesData.Find<Sale>(mindbodySalesData => mindbodySalesData.userId == user.Id.ToString()).ToListAsync();
         }
 
         public async Task<Sale> UpdateSalesData(Sale mindbodySalesDataIn)

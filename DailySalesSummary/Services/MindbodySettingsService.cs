@@ -18,26 +18,19 @@ namespace DailySalesSummary.Services
             return user?.Mindbody;
         }
 
-        public async Task<User> SetMindbodySettings(MindbodySettingsUpdateRequest request)
+        public async Task<bool> SetMindbodySettings(MindbodySettingsUpdateRequest request)
         {
             var user = await _userRepository.GetUser(request.UserId);
 
             if (user == null)
             {
-                return null;
+                return false;
             }
 
             user.Mindbody = request.MindbodySettings;
             var result = await _userRepository.UpdateUser(user);
 
-            if (!(result == null))
-            {
-                return result;
-            }
-            else
-            {
-                return null;
-            }
+            return result;
         }
     }
 }

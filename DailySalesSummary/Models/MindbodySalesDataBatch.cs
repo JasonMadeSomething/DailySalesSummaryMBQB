@@ -13,9 +13,10 @@ namespace DailySalesSummary.Models
         [BsonId]
         public string Id { get; set; }
 
+        
+        
         [BsonRepresentation(BsonType.ObjectId)]
         public string UserId { get; set; }
-
         public List<Sale> Sales { get; set; }
 
         public DateTime FetchedAt { get; set; }

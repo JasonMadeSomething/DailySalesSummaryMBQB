@@ -1,6 +1,5 @@
 ﻿using DailySalesSummary.Models;
 using Microsoft.AspNetCore.Identity;
-using System.Runtime.CompilerServices;
 
 namespace DailySalesSummary.Repositories
 {
@@ -8,11 +7,11 @@ namespace DailySalesSummary.Repositories
     {
         
         Task<User> GetUser(string id);
-        
+        Task<IEnumerable<User>> GetAllUsers();
         // User Create
-        Task<IdentityResult> CreateUser(User user, string password);
+        Task<IdentityResult> CreateUser(User user, string password, string role);
         // User Update
-        Task<User> UpdateUser(User userIn);
+        Task<bool> UpdateUser(User userIn);
         // User Delete
         Task<bool> DeleteUser(string id);
 

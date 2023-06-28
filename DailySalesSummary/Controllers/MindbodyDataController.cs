@@ -1,31 +1,35 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using DailySalesSummary.Services;
 using DailySalesSummary.Models;
+using Microsoft.AspNetCore.Authorization;
+
 namespace DailySalesSummary.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    
     public class MindbodyDataController : ControllerBase
     {
         private readonly IMindbodyClientService _mindbodyClientService;
-        private readonly IMindbodySettingsService _mindbodySettingsService;
-        public MindbodyDataController(IMindbodyClientService mindbodyClientService, IMindbodySettingsService mindbodySettingsService)
+        
+        public MindbodyDataController(IMindbodyClientService mindbodyClientService)
         {
             _mindbodyClientService = mindbodyClientService;
-            _mindbodySettingsService = mindbodySettingsService;
+            
         }
 
         [HttpPost]
-        public async Task<ActionResult> RetrieveSalesFromAPI([FromBody] MindbodyDataRequest mindbodyDataRequest)
+        [Authorize(AuthenticationSchemes = "Bearer", Roles = "User")]
+        public async Task<ActionResult> RetrieveSalesFromAPIForActiveUser([FromBody] MindbodyDataRequest mindbodyDataRequest)
         {
-            
+            string userId = User.FindFirst("id")?.Value;
+
             if (mindbodyDataRequest.StartDate == null || mindbodyDataRequest.EndDate == null)
             {
                 mindbodyDataRequest.StartDate = DateTime.Now.AddDays(-1);
                 mindbodyDataRequest.EndDate = DateTime.Now;
             }
-            mindbodyDataRequest.MindbodySettings = await _mindbodySettingsService.GetMindbodySettings(mindbodyDataRequest.UserId);
-            var mindbodySalesData = await _mindbodyClientService.GetMindbodySalesDataAsync(mindbodyDataRequest);
+            var mindbodySalesData = await _mindbodyClientService.GetMindbodySalesDataAsync(mindbodyDataRequest, userId);
 
             if (mindbodySalesData == null || mindbodySalesData == new MindbodySalesDataBatch())
             {
@@ -34,6 +38,9 @@ namespace DailySalesSummary.Controllers
             
             return Ok(mindbodySalesData);
         }
+
+
+        
 
     }
 }

@@ -13,6 +13,9 @@ using Microsoft.IdentityModel.Tokens;
 using AspNetCore.Identity.Mongo;
 using DailySalesSummary.Models;
 using AspNetCore.Identity.Mongo.Model;
+using DailySalesSummary.Helpers;
+using Mindbody.Helpers;
+using System.Security.Claims;
 
 public class Startup
 {
@@ -26,10 +29,10 @@ public class Startup
     public void ConfigureServices(IServiceCollection services)
     {
 
-        var jwtSettings = Configuration.GetSection("JwtSettings");
-        var key = Encoding.UTF8.GetBytes(jwtSettings.GetValue<string>("Key"));
+        IConfiguration jwtSettings = Configuration.GetSection("JwtSettings");
+        byte[] key = Encoding.UTF8.GetBytes(jwtSettings.GetValue<string>("Key"));
 
-
+        
         services.AddAuthentication(options =>
         {
             options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -46,7 +49,26 @@ public class Startup
                 ValidateAudience = true,
                 ValidAudience = jwtSettings.GetValue<string>("Audience"),
                 ValidateLifetime = true,
-                ClockSkew = TimeSpan.Zero
+                ClockSkew = TimeSpan.Zero,
+                RoleClaimType = ClaimTypes.Role
+            };
+            options.Events = new JwtBearerEvents
+            {
+                OnAuthenticationFailed = context =>
+                {
+                    System.Diagnostics.Debug.WriteLine("Authentication failed:" + context.Exception.Message);
+                    return Task.CompletedTask;
+                },
+                OnTokenValidated = context =>
+                {
+                    System.Diagnostics.Debug.WriteLine("Auth Worked" + context.SecurityToken);
+                    return Task.CompletedTask;
+                },
+                OnChallenge = context =>
+                {
+                    System.Diagnostics.Debug.WriteLine("OnChallenge: " + context.Error);
+                    return Task.CompletedTask;
+                }
             };
         });
         services.AddSingleton<IMongoClient, MongoClient>(s =>
@@ -60,6 +82,7 @@ public class Startup
             client.BaseAddress = new Uri(Configuration.GetSection("MindbodyAPI:BaseUrl").Value);
             
         });
+        
         services.AddIdentityMongoDbProvider<User, MongoRole>(identityOptions =>
         {
             identityOptions.Password.RequiredLength = 8;
@@ -70,16 +93,19 @@ public class Startup
         }, mongoIdentityOptions =>
         {
             mongoIdentityOptions.ConnectionString = Configuration.GetConnectionString("MongoDb");
-            mongoIdentityOptions.UsersCollection = "Users";
-            mongoIdentityOptions.RolesCollection = "Roles";
+            Configuration.GetConnectionString("DatabaseName");
+            mongoIdentityOptions.UsersCollection = "users";
+            mongoIdentityOptions.RolesCollection = "roles";
         });
 
-        
+        services.AddScoped<IJWTGenerator, JWTGenerator>();
+        services.AddScoped<AdminUserEnsurer>();
 
-        services.AddSingleton<IUserRepository, UserRepository>();
+        services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IMindbodyClient, MindbodyClient>();
         services.AddScoped<IMindbodyDataRepository, MindbodyDataRepository>();
         services.AddScoped<IMindbodyBatchRepository, MindbodyBatchRepository>();
+        services.AddScoped<IMindbodyBatchService, MindbodyBatchService>();
 
         services.AddScoped<IMindbodyBatchReportService, MindbodyBatchReportService>();
         services.AddScoped<IMindbodyDataService, MindbodyDataService>();
@@ -89,21 +115,22 @@ public class Startup
         services.AddControllers();
     }
 
-    public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+    public async void Configure(IApplicationBuilder app, IWebHostEnvironment env, AdminUserEnsurer adminUserEnsurer)
     {
         if (env.IsDevelopment())
         {
             app.UseDeveloperExceptionPage();
         }
 
-        
-        
+        adminUserEnsurer.EnsureCreatedAsync().Wait();
+
 
         app.UseHttpsRedirection();
 
         app.UseRouting();
-        app.UseAuthorization();
         app.UseAuthentication();
+        app.UseAuthorization();
+        
         app.UseEndpoints(endpoints =>
         {
             endpoints.MapControllers();

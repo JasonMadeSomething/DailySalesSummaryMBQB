@@ -4,6 +4,6 @@ namespace DailySalesSummary.Repositories
 {
     public interface IMindbodyClient
     {
-        Task<MindbodySalesDataBatch> GetMindbodySalesDataAsync(MindbodyDataRequest mindbodyDataRequest);
+        Task<MindbodySalesDataBatch> GetMindbodySalesDataAsync(MindbodyDataRequest mindbodyDataRequest, User user);
     }
 }

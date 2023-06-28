@@ -4,6 +4,6 @@ namespace DailySalesSummary.Helpers
 {
     public interface IJWTGenerator
     {
-        string GenerateJwtToken(User user);
+        Task<string> GenerateJwtToken(User user);
     }
 }
